@@ -9,7 +9,7 @@ async function connectDB() {
   if (uri.includes('<username>') || uri.includes('<password>') || uri.includes('xxxxx')) {
     throw new Error('MONGO_URI still contains placeholder values. Put your real Atlas username, password and cluster host in .env.');
   }
-  await mongoose.connect(uri, { serverSelectionTimeoutMS: 15000 });
+  await mongoose.connect(uri, { serverSelectionTimeoutMS: 45000 });
   console.log('MongoDB connected');
 }
 
