@@ -1,0 +1,139 @@
+{
+  "info": {
+    "name": "Research Opportunity Portal API",
+    "description": "Run the requests in order (1 to 10). Create requests store the new IDs in collection variables (id1, id2, id3).",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost:5000" },
+    { "key": "id1", "value": "" },
+    { "key": "id2", "value": "" },
+    { "key": "id3", "value": "" }
+  ],
+  "item": [
+    {
+      "name": "1a. Create opportunity #1",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+        "pm.collectionVariables.set('id1', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Deep Learning for Medical Image Analysis\",\n  \"description\": \"Develop CNN models to detect anomalies in chest X-ray images.\",\n  \"research_area\": \"Artificial Intelligence\",\n  \"faculty_name\": \"Dr. Ayesha Khan\",\n  \"department\": \"Computer Science\",\n  \"required_skills\": \"Python, PyTorch, Deep Learning\",\n  \"positions\": 2,\n  \"deadline\": \"2026-12-15\",\n  \"status\": \"Open\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/opportunities", "host": ["{{baseUrl}}"], "path": ["api", "opportunities"] }
+      }
+    },
+    {
+      "name": "1b. Create opportunity #2",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+        "pm.collectionVariables.set('id2', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Secure Routing in Wireless Sensor Networks\",\n  \"description\": \"Design and simulate a lightweight secure routing protocol for IoT sensor networks.\",\n  \"research_area\": \"Computer Networks\",\n  \"faculty_name\": \"Dr. Imran Ali\",\n  \"department\": \"Computer Science\",\n  \"required_skills\": \"Networking, NS-3, C++\",\n  \"positions\": 3,\n  \"deadline\": \"2026-11-30\",\n  \"status\": \"Open\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/opportunities", "host": ["{{baseUrl}}"], "path": ["api", "opportunities"] }
+      }
+    },
+    {
+      "name": "1c. Create opportunity #3",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 201 Created', () => pm.response.to.have.status(201));",
+        "pm.collectionVariables.set('id3', pm.response.json().id);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Energy-Efficient Data Center Scheduling\",\n  \"description\": \"Investigate scheduling algorithms that reduce power consumption in cloud data centers.\",\n  \"research_area\": \"Cloud Computing\",\n  \"faculty_name\": \"Dr. Sana Rahman\",\n  \"department\": \"Software Engineering\",\n  \"required_skills\": \"Java, Linux, Algorithms\",\n  \"positions\": 1,\n  \"deadline\": \"2027-01-10\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/opportunities", "host": ["{{baseUrl}}"], "path": ["api", "opportunities"] }
+      }
+    },
+    {
+      "name": "2. Get all opportunities",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Returns an array with at least 3 items', () => pm.expect(pm.response.json().length).to.be.at.least(3));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/opportunities", "host": ["{{baseUrl}}"], "path": ["api", "opportunities"] }
+      }
+    },
+    {
+      "name": "3. Get one opportunity by ID",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('ID matches', () => pm.expect(String(pm.response.json().id)).to.eql(pm.collectionVariables.get('id1')));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/opportunities/{{id1}}", "host": ["{{baseUrl}}"], "path": ["api", "opportunities", "{{id1}}"] }
+      }
+    },
+    {
+      "name": "4. Update opportunity (title, skills, positions, deadline)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Title was updated', () => pm.expect(pm.response.json().title).to.include('(Updated)'));"
+      ] } }],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"Deep Learning for Medical Image Analysis (Updated)\",\n  \"required_skills\": \"Python, PyTorch, Deep Learning, OpenCV\",\n  \"positions\": 4,\n  \"deadline\": \"2026-12-31\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/opportunities/{{id1}}", "host": ["{{baseUrl}}"], "path": ["api", "opportunities", "{{id1}}"] }
+      }
+    },
+    {
+      "name": "5. Change status Open to Closed",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));",
+        "pm.test('Opportunity is now Closed', () => pm.expect(pm.response.json().status).to.eql('Closed'));"
+      ] } }],
+      "request": {
+        "method": "PUT",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"status\": \"Closed\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/opportunities/{{id2}}", "host": ["{{baseUrl}}"], "path": ["api", "opportunities", "{{id2}}"] }
+      }
+    },
+    {
+      "name": "6. Delete opportunity",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 200 OK', () => pm.response.to.have.status(200));"
+      ] } }],
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/opportunities/{{id3}}", "host": ["{{baseUrl}}"], "path": ["api", "opportunities", "{{id3}}"] }
+      }
+    },
+    {
+      "name": "7. Get deleted opportunity (expect 404)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 404 Not Found', () => pm.response.to.have.status(404));"
+      ] } }],
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": { "raw": "{{baseUrl}}/api/opportunities/{{id3}}", "host": ["{{baseUrl}}"], "path": ["api", "opportunities", "{{id3}}"] }
+      }
+    },
+    {
+      "name": "8. Create with invalid/missing data (expect 400)",
+      "event": [{ "listen": "test", "script": { "type": "text/javascript", "exec": [
+        "pm.test('Status is 400 Bad Request', () => pm.response.to.have.status(400));",
+        "pm.test('Validation errors are listed', () => pm.expect(pm.response.json().errors).to.be.an('array').that.is.not.empty);"
+      ] } }],
+      "request": {
+        "method": "POST",
+        "header": [{ "key": "Content-Type", "value": "application/json" }],
+        "body": { "mode": "raw", "raw": "{\n  \"title\": \"\",\n  \"positions\": 0,\n  \"deadline\": \"not-a-date\"\n}" },
+        "url": { "raw": "{{baseUrl}}/api/opportunities", "host": ["{{baseUrl}}"], "path": ["api", "opportunities"] }
+      }
+    }
+  ]
+}
