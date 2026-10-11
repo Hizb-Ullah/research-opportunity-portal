@@ -1,0 +1,26 @@
+body {
+  background: #f4f6f9;
+}
+
+.card {
+  border: 0;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
+}
+
+tbody tr td:first-child {
+  font-weight: 600;
+  max-width: 280px;
+}
+
+.detail-label {
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6c757d;
+  margin-bottom: 0.1rem;
+}
+
+.detail-value {
+  margin-bottom: 1rem;
+  white-space: pre-wrap;
+}
