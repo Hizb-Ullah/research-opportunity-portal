@@ -121,7 +121,7 @@ curl -X POST http://localhost:5000/api/opportunities \
 
 - Table of all opportunities (loaded from the API), with search and status filter
 - View full details of an opportunity
-- Create form, edit form, one-click Close, and delete with confirmation
+- Create form, edit form, one-click Close, **Renew** (reopen a closed opportunity with a new deadline), and delete with confirmation
 - Success and error messages
 - Client-side validation of required fields (plus server-side validation)
 

@@ -8,6 +8,7 @@ const $ = (id) => document.getElementById(id);
 const detailsModal = new bootstrap.Modal($('detailsModal'));
 const formModal = new bootstrap.Modal($('formModal'));
 const deleteModal = new bootstrap.Modal($('deleteModal'));
+const renewModal = new bootstrap.Modal($('renewModal'));
 
 const FIELDS = ['title', 'description', 'research_area', 'faculty_name', 'department', 'required_skills', 'positions', 'deadline', 'status'];
 
@@ -76,7 +77,9 @@ function renderTable() {
       <td class="text-end text-nowrap">
         <button class="btn btn-sm btn-outline-primary" data-action="view" data-id="${o.id}">View</button>
         <button class="btn btn-sm btn-outline-secondary" data-action="edit" data-id="${o.id}">Edit</button>
-        ${o.status === 'Open' ? `<button class="btn btn-sm btn-outline-warning" data-action="close" data-id="${o.id}">Close</button>` : ''}
+        ${o.status === 'Open'
+          ? `<button class="btn btn-sm btn-outline-warning" data-action="close" data-id="${o.id}">Close</button>`
+          : `<button class="btn btn-sm btn-outline-success" data-action="renew" data-id="${o.id}">Renew</button>`}
         <button class="btn btn-sm btn-outline-danger" data-action="delete" data-id="${o.id}">Delete</button>
       </td>
     </tr>`
@@ -153,6 +156,46 @@ async function closeOpportunity(id) {
   }
 }
 
+// ---------- renew (reopen with a new deadline) ----------
+const todayStr = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
+
+function openRenew(id) {
+  const o = opportunities.find((x) => x.id === id);
+  if (!o) return;
+  $('renewForm').classList.remove('was-validated');
+  $('renewId').value = id;
+  $('renewName').textContent = o.title;
+  $('renewDeadline').min = todayStr();
+  $('renewDeadline').value = '';
+  renewModal.show();
+}
+
+$('renewForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  const deadline = $('renewDeadline').value;
+  if (!deadline || deadline < todayStr()) {
+    $('renewForm').classList.add('was-validated');
+    $('renewDeadline').setCustomValidity('invalid');
+    return;
+  }
+  $('renewDeadline').setCustomValidity('');
+  $('btnRenew').disabled = true;
+  try {
+    await api(`${API}/${$('renewId').value}`, { method: 'PUT', body: JSON.stringify({ status: 'Open', deadline }) });
+    renewModal.hide();
+    showAlert('Opportunity renewed and reopened.');
+    loadOpportunities();
+  } catch (err) {
+    showAlert(err.message, 'danger');
+  } finally {
+    $('btnRenew').disabled = false;
+  }
+});
+$('renewDeadline').addEventListener('input', () => $('renewDeadline').setCustomValidity(''));
+
 // ---------- delete ----------
 function askDelete(id) {
   const o = opportunities.find((x) => x.id === id);
@@ -183,6 +226,7 @@ $('tableBody').addEventListener('click', (e) => {
   if (action === 'view') viewOpportunity(id);
   if (action === 'edit') openForm(opportunities.find((o) => o.id === id));
   if (action === 'close') closeOpportunity(id);
+  if (action === 'renew') openRenew(id);
   if (action === 'delete') askDelete(id);
 });
 

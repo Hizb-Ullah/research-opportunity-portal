@@ -131,6 +131,29 @@
     </div>
   </div>
 
+  <!-- Renew modal -->
+  <div class="modal fade" id="renewModal" tabindex="-1">
+    <div class="modal-dialog">
+      <form class="modal-content" id="renewForm" novalidate>
+        <div class="modal-header">
+          <h5 class="modal-title">Renew opportunity</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        </div>
+        <div class="modal-body">
+          <p>Reopen "<strong id="renewName"></strong>" for applications by setting a new deadline.</p>
+          <input type="hidden" id="renewId" />
+          <label class="form-label" for="renewDeadline">New application deadline *</label>
+          <input type="date" class="form-control" id="renewDeadline" required />
+          <div class="invalid-feedback">Choose a deadline that is today or later.</div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-success" id="btnRenew">Renew</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <!-- Delete confirmation modal -->
   <div class="modal fade" id="deleteModal" tabindex="-1">
     <div class="modal-dialog">
