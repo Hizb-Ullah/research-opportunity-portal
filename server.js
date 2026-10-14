@@ -2,8 +2,7 @@ require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const path = require('path');
-const connectDB = require('./db');
-const Opportunity = require('./models/Opportunity');
+const pool = require('./db');
 const { validateOpportunity } = require('./validate');
 
 const app = express();
@@ -13,6 +12,7 @@ app.use(cors());
 app.use(express.json());
 app.use(express.static(path.join(__dirname, 'public'))); // serves the frontend
 
+// Columns that can be written through the API
 const FIELDS = [
   'title',
   'description',
@@ -25,26 +25,8 @@ const FIELDS = [
   'status',
 ];
 
-// MongoDB ObjectIds are 24 hex characters
-const validId = (id) => /^[a-f\d]{24}$/i.test(id);
-
-// Only keep known fields from the request body
-function pickFields(body) {
-  const out = {};
-  for (const f of FIELDS) if (body[f] !== undefined) out[f] = body[f];
-  return out;
-}
-
-function handleError(res, err) {
-  if (err.name === 'ValidationError') {
-    return res.status(400).json({ message: 'Validation failed', errors: Object.values(err.errors).map((e) => e.message) });
-  }
-  if (err.name === 'CastError') {
-    return res.status(400).json({ message: 'Invalid value provided' });
-  }
-  console.error(err);
-  res.status(500).json({ message: 'Internal server error' });
-}
+const clean = (v) => (typeof v === 'string' ? v.trim() : v);
+const validId = (id) => /^\d+$/.test(id);
 
 // ---------- 1. CREATE ----------
 app.post('/api/opportunities', async (req, res) => {
@@ -52,63 +34,95 @@ app.post('/api/opportunities', async (req, res) => {
     const errors = validateOpportunity(req.body, false);
     if (errors.length) return res.status(400).json({ message: 'Validation failed', errors });
 
-    const created = await Opportunity.create(pickFields(req.body));
-    res.status(201).json(created);
+    const b = req.body;
+    const [result] = await pool.execute(
+      `INSERT INTO opportunities
+       (title, description, research_area, faculty_name, department, required_skills, positions, deadline, status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        clean(b.title),
+        clean(b.description),
+        clean(b.research_area),
+        clean(b.faculty_name),
+        clean(b.department),
+        clean(b.required_skills),
+        Number(b.positions),
+        b.deadline,
+        b.status || 'Open',
+      ]
+    );
+    const [rows] = await pool.execute('SELECT * FROM opportunities WHERE id = ?', [result.insertId]);
+    res.status(201).json(rows[0]);
   } catch (err) {
-    handleError(res, err);
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 // ---------- 2. READ ALL ----------
 app.get('/api/opportunities', async (req, res) => {
   try {
-    const list = await Opportunity.find().sort({ createdAt: -1 });
-    res.status(200).json(list);
+    const [rows] = await pool.execute('SELECT * FROM opportunities ORDER BY id DESC');
+    res.status(200).json(rows);
   } catch (err) {
-    handleError(res, err);
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 // ---------- 3. READ ONE ----------
 app.get('/api/opportunities/:id', async (req, res) => {
   try {
-    if (!validId(req.params.id)) return res.status(400).json({ message: 'Invalid opportunity ID' });
-    const found = await Opportunity.findById(req.params.id);
-    if (!found) return res.status(404).json({ message: 'Research opportunity not found' });
-    res.status(200).json(found);
+    if (!validId(req.params.id)) return res.status(400).json({ message: 'ID must be a positive number' });
+    const [rows] = await pool.execute('SELECT * FROM opportunities WHERE id = ?', [req.params.id]);
+    if (!rows.length) return res.status(404).json({ message: 'Research opportunity not found' });
+    res.status(200).json(rows[0]);
   } catch (err) {
-    handleError(res, err);
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 // ---------- 4. UPDATE ----------
 app.put('/api/opportunities/:id', async (req, res) => {
   try {
-    if (!validId(req.params.id)) return res.status(400).json({ message: 'Invalid opportunity ID' });
+    if (!validId(req.params.id)) return res.status(400).json({ message: 'ID must be a positive number' });
 
     const errors = validateOpportunity(req.body, true);
     if (errors.length) return res.status(400).json({ message: 'Validation failed', errors });
 
-    const updates = pickFields(req.body);
-    if (!Object.keys(updates).length) return res.status(400).json({ message: 'No valid fields provided to update' });
+    const sets = [];
+    const values = [];
+    for (const f of FIELDS) {
+      if (req.body[f] !== undefined) {
+        sets.push(`${f} = ?`);
+        values.push(f === 'positions' ? Number(req.body[f]) : clean(req.body[f]));
+      }
+    }
+    if (!sets.length) return res.status(400).json({ message: 'No valid fields provided to update' });
 
-    const updated = await Opportunity.findByIdAndUpdate(req.params.id, updates, { new: true, runValidators: true });
-    if (!updated) return res.status(404).json({ message: 'Research opportunity not found' });
-    res.status(200).json(updated);
+    values.push(req.params.id);
+    const [result] = await pool.execute(`UPDATE opportunities SET ${sets.join(', ')} WHERE id = ?`, values);
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Research opportunity not found' });
+
+    const [rows] = await pool.execute('SELECT * FROM opportunities WHERE id = ?', [req.params.id]);
+    res.status(200).json(rows[0]);
   } catch (err) {
-    handleError(res, err);
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
 // ---------- 5. DELETE ----------
 app.delete('/api/opportunities/:id', async (req, res) => {
   try {
-    if (!validId(req.params.id)) return res.status(400).json({ message: 'Invalid opportunity ID' });
-    const deleted = await Opportunity.findByIdAndDelete(req.params.id);
-    if (!deleted) return res.status(404).json({ message: 'Research opportunity not found' });
+    if (!validId(req.params.id)) return res.status(400).json({ message: 'ID must be a positive number' });
+    const [result] = await pool.execute('DELETE FROM opportunities WHERE id = ?', [req.params.id]);
+    if (result.affectedRows === 0) return res.status(404).json({ message: 'Research opportunity not found' });
     res.status(200).json({ message: 'Research opportunity deleted successfully' });
   } catch (err) {
-    handleError(res, err);
+    console.error(err);
+    res.status(500).json({ message: 'Internal server error' });
   }
 });
 
@@ -123,10 +137,16 @@ app.use((err, req, res, next) => {
 });
 
 if (require.main === module) {
-  connectDB()
-    .then(() => app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`)))
+  // Check the database connection before accepting requests
+  pool
+    .query('SELECT 1')
+    .then(() => {
+      console.log('MySQL connected');
+      app.listen(PORT, () => console.log(`Server running at http://localhost:${PORT}`));
+    })
     .catch((err) => {
-      console.error('Could not start: ' + err.message);
+      console.error('Could not connect to MySQL: ' + err.message);
+      console.error('Check DB_USER / DB_PASSWORD / DB_NAME in .env and that you ran: npm run db:setup');
       process.exit(1);
     });
 }

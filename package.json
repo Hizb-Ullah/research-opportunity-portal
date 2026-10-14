@@ -1,16 +1,17 @@
 {
   "name": "research-opportunity-portal",
   "version": "1.0.0",
-  "description": "University Research Opportunity Portal - REST API (Express + MongoDB) with a Bootstrap frontend",
+  "description": "University Research Opportunity Portal - REST API (Express + MySQL) with a Bootstrap frontend",
   "main": "server.js",
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "db:setup": "node database/setup.js"
   },
   "license": "ISC",
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
-    "mongoose": "^8.6.0"
+    "mysql2": "^3.24.6"
   }
 }

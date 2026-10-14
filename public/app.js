@@ -178,7 +178,7 @@ $('btnConfirmDelete').addEventListener('click', async () => {
 $('tableBody').addEventListener('click', (e) => {
   const btn = e.target.closest('button[data-action]');
   if (!btn) return;
-  const id = btn.dataset.id; // MongoDB ids are strings
+  const id = Number(btn.dataset.id);
   const action = btn.dataset.action;
   if (action === 'view') viewOpportunity(id);
   if (action === 'edit') openForm(opportunities.find((o) => o.id === id));

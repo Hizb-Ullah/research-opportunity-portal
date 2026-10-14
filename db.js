@@ -1,16 +1,15 @@
 require('dotenv').config();
-const mongoose = require('mongoose');
+const mysql = require('mysql2/promise');
 
-async function connectDB() {
-  const uri = process.env.MONGO_URI;
-  if (!uri) {
-    throw new Error('MONGO_URI is not set. Copy .env.example to .env and fill in your MongoDB connection string.');
-  }
-  if (uri.includes('<username>') || uri.includes('<password>') || uri.includes('xxxxx')) {
-    throw new Error('MONGO_URI still contains placeholder values. Put your real Atlas username, password and cluster host in .env.');
-  }
-  await mongoose.connect(uri, { serverSelectionTimeoutMS: 45000 });
-  console.log('MongoDB connected');
-}
+const pool = mysql.createPool({
+  host: process.env.DB_HOST || '127.0.0.1',
+  port: process.env.DB_PORT || 3306,
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'research_portal',
+  waitForConnections: true,
+  connectionLimit: 10,
+  dateStrings: true, // return DATE columns as 'YYYY-MM-DD' strings
+});
 
-module.exports = connectDB;
+module.exports = pool;
